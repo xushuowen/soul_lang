@@ -8,10 +8,13 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
-# Phase 2 改用 os.urandom，避免 NIST Beacon rate limit
-# （Phase 1 已確認 NIST quantum ε；Phase 2 分析兩者差異）
-import runtime.epsilon as _eps
-_eps._USE_QUANTUM = False
+# 先載入 runtime，再從 sys.modules 取真正的 epsilon 模組
+import runtime  # noqa: 觸發所有子模組載入
+import sys
+
+_eps_mod = sys.modules["runtime.epsilon"]
+_eps_mod._USE_QUANTUM = False
+_eps_mod._fetch_quantum_batch = lambda n=256: None  # 完全封鎖 NIST 呼叫
 
 from runtime.state import State
 from runtime.experiment import VerificationExperiment
