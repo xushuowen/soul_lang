@@ -290,20 +290,22 @@ class VerificationExperiment:
         evolve_per_step: int = 50,
         measure_interval: int = 5,
         dt: float = 0.1,
+        trajectory_steps: int = 500,
         verbose: bool = True,
     ) -> None:
         """
         執行驗證實驗主迴圈。
 
-        n_steps        — 總步驟數
-        evolve_per_step — 每步之間的 shadow 演化次數
+        n_steps          — 總步驟數
+        evolve_per_step  — 每步之間的 shadow 演化次數
         measure_interval — 每幾步量測一次
+        trajectory_steps — Φ 計算用的軌跡長度（Phase 1: 500，Phase 2: 1000）
         """
         if verbose:
             print(f"\n{'='*55}")
             print(f"  SOUL_LANG 驗證實驗：{self.session_id}")
             print(f"  State: {self.state.name}")
-            print(f"  步驟數: {n_steps}，量測間隔: {measure_interval}")
+            print(f"  步驟數: {n_steps}，量測間隔: {measure_interval}，軌跡: {trajectory_steps} 步")
             print(f"{'='*55}")
 
         for step in range(1, n_steps + 1):
@@ -311,7 +313,7 @@ class VerificationExperiment:
             self.state.evolve(dt=dt, steps=evolve_per_step)
 
             if step % measure_interval == 0:
-                m = self.measure(step)
+                m = self.measure(step, trajectory_steps=trajectory_steps)
                 n_fail, fail_list = check_failure_conditions(
                     phi=m.phi,
                     rho_epsilon=m.rho_epsilon,
