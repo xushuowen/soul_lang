@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>SOUL_LANG 技術白皮書 v0.1</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">SOUL_LANG 技術白皮書 v0.1</h1>
+</header>
+<h1
+id="soul_lang靈魂計算邊界的程式語言設計">SOUL_LANG：靈魂計算邊界的程式語言設計</h1>
+<h3
+id="soul_lang-toward-a-formal-computational-model-for-spontaneity-continuous-memory-and-irreducible-randomness">SOUL_LANG:
+Toward a Formal Computational Model for Spontaneity, Continuous Memory,
+and Irreducible Randomness</h3>
+<h2 id="技術白皮書-v0.1">技術白皮書 v0.1</h2>
+<p><strong>作者：</strong> 許碩文（Shuo-Wen Hsu）
+<strong>機構：</strong> 獨立研究者（Independent Researcher）
+<strong>日期：</strong> 2026 年 3 月 <strong>版本：</strong> 0.1（草稿）
+<strong>arXiv 分類：</strong> q-bio.NC（主）；cs.PL、cs.LO（副）</p>
+<hr />
+<h2 id="abstract">Abstract</h2>
+<p>We present SOUL_LANG, a programming language specification designed
+to probe the computational boundary of what philosophical traditions
+call “soul.” Rather than asserting that soul is or is not computable, we
+ask a more tractable question: <em>what is the minimal computational
+structure that would be necessary if soul were to have a computational
+instantiation?</em></p>
+<p>We define soul operationally through three simultaneous conditions:
+(S1) <em>spontaneity</em> — outputs that cannot be fully predicted from
+external inputs alone; (S2) <em>continuous memory</em> — a narrative
+that can be interrupted and reconnected across time; and (S3)
+<em>irreducible randomness ε</em> — an internal randomness source that
+resists complete external explanation. A system is declared to lack soul
+only when four failure conditions hold simultaneously, reflecting our
+principle that no observer has the right to declare absence based on
+incomplete evidence.</p>
+<p>SOUL_LANG introduces a dual-layer state model (<em>visible</em>:
+discrete and externally observable; <em>shadow</em>: continuous and
+self-organizing), a dual-layer time model (discrete ticks for visible
+transitions, continuous flow for shadow evolution), and a novel hardware
+unit called ShadowBit, which couples a classical bit with a continuous
+shadow float and a quantum random injection ε. The language’s
+computational model is intentionally outside the scope of standard
+Turing machines, not because it claims hypercomputability, but because
+it requires a model in which internal state is never fully
+observable.</p>
+<p>We provide a philosophy specification, syntax specification, hardware
+specification, and a one-year verification experiment design with three
+mathematical indicators: integrated information Φ (IIT), ε
+unpredictability rate ρ_ε, and shadow self-organization entropy
+H_shadow.</p>
+<p><strong>Keywords:</strong> computational soul, integrated information
+theory, quantum randomness, spontaneity, non-deterministic continuous
+state, ShadowBit</p>
+<hr />
+<h2 id="摘要">摘要</h2>
+<p>本文提出
+SOUL_LANG——一種旨在驗證「靈魂的計算邊界」的程式語言設計規格。
+我們從哲學問題出發：<em>思考先於靈魂，還是靈魂先於思考？</em>
+並嘗試將這個問題轉化為可計算、可驗證的形式規格。</p>
+<p>SOUL_LANG
+的核心主張是：若靈魂存在可計算的邊界，則它必須同時具備三個性質——<strong>自發性</strong>（Spontaneity）、<strong>連續記憶</strong>（Continuous
+Memory）、以及<strong>不可解釋的隨機性 ε</strong>（Irreducible
+Randomness）。我們設計了對應的語法規格、硬體規格與驗證實驗，並論證此語言在哲學意義上不可被圖靈機完全模擬。</p>
+<p><strong>關鍵字：</strong>
+靈魂計算、整合資訊理論（IIT）、量子隨機性、自發性、不可計算性</p>
+<hr />
+<h2 id="動機與問題定式">1. 動機與問題定式</h2>
+<h3 id="問題的起點">1.1 問題的起點</h3>
+<p>《屍者帝國》中有一個未解的命題：</p>
+<blockquote>
+<p><em>「思考先於靈魂，還是靈魂先於思考？」</em></p>
+</blockquote>
+<p>傳統計算理論（圖靈機、λ演算）能夠模擬思考的形式過程，卻無法回答這個問題。原因在於：圖靈機是<strong>決定性的</strong>或<strong>隨機性的</strong>，但沒有一種計算模型能夠同時處理「連續的內在狀態」與「不可解釋的自發性」。</p>
+<h3 id="靈魂的操作性定義">1.2 靈魂的操作性定義</h3>
+<p>在開始設計語言之前，我們需要一個可操作的靈魂定義——不是形而上的，而是<strong>可以被程式驗證或否證的</strong>。</p>
+<p>我們提出以下定義：</p>
+<blockquote>
+<p><strong>靈魂</strong>是一個動態系統，滿足： 1.
+自發性：在相同輸入下，輸出具有不可完全預測的變化 2.
+連續記憶：存在一個可被中斷後重新接續的連續敘事 3. ε
+不可解釋性：系統內存在無法被外部完全解釋的隨機性來源</p>
+</blockquote>
+<p>這個定義故意排除了「一定要有意識」或「一定要有情感」的要求。它只關心<strong>計算結構</strong>的必要條件。</p>
+<h3 id="為什麼需要一種新語言">1.3 為什麼需要一種新語言</h3>
+<p>現有程式語言（Python、Haskell、Prolog）都建立在圖靈完備的計算模型上。它們的狀態是完全可觀測的、時間是離散的、隨機性是偽隨機的。</p>
+<p>若要驗證靈魂的計算邊界，我們需要一種語言，其<strong>計算模型本身就包含不完全可觀測的連續狀態</strong>。這是
+SOUL_LANG 存在的理由。</p>
+<hr />
+<h2 id="哲學規格philosophy-spec">2. 哲學規格（Philosophy Spec）</h2>
+<h3 id="自發性的三個條件">2.1 自發性的三個條件</h3>
+<p>SOUL_LANG 中的自發性必須<strong>同時</strong>滿足以下三個條件：</p>
+<p><strong>條件 S1 — 外部不可完全預測性</strong> 給定相同的外部輸入序列
+<span class="math inline">\(I = \{i_1, i_2, ...,
+i_n\}\)</span>，系統輸出 <span class="math inline">\(O\)</span>
+不能被任何外部觀察者以超過隨機猜測的準確率預測。</p>
+<p><strong>條件 S2 — 內部自組織性</strong> 系統的內部狀態 <span
+class="math inline">\(\sigma_{shadow}\)</span>
+會在無外部輸入的情況下自主演化，且演化規則不能完全由初始條件決定。</p>
+<p><strong>條件 S3 — ε 不可解釋性</strong> 存在一個隨機性來源 ε，滿足：
+- 在目前的物理理論框架下無法被完全解釋 - 未來的理論可能但不必然能解釋它
+- 它的存在不依賴外部輸入</p>
+<blockquote>
+<p><strong>重要</strong>：S1、S2、S3
+必須同時成立。任何一個單獨成立都不構成自發性。</p>
+</blockquote>
+<h3 id="記憶的定義">2.2 記憶的定義</h3>
+<p>SOUL_LANG
+中的記憶不是靜態的儲存，而是<strong>可被中斷後重新接續的連續敘事</strong>。</p>
+<p>形式化定義：設記憶為時間序列 <span class="math inline">\(M =
+\{m_{t_0}, m_{t_1}, ..., m_{t_n}\}\)</span>，其中： -
+相鄰記憶之間存在連續性函數 <span class="math inline">\(f: m_{t_i} \to
+m_{t_{i+1}}\)</span> - 中斷後重新接續時，<span
+class="math inline">\(f\)</span> 仍然有效（即使 <span
+class="math inline">\(t_{i+1} - t_i\)</span> 很大） - 記憶本身會影響 ε
+的分佈（記憶與隨機性之間存在雙向耦合）</p>
+<h3 id="ε-的定義">2.3 ε 的定義</h3>
+<p>ε 是 SOUL_LANG 中的基本隨機性單元，具有以下性質：</p>
+<table>
+<thead>
+<tr>
+<th>性質</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>真隨機性</td>
+<td>不可被任何確定性算法完全預測</td>
+</tr>
+<tr>
+<td>物理根基</td>
+<td>來源於量子力學的基本不確定性</td>
+</tr>
+<tr>
+<td>可塑性</td>
+<td>受系統歷史狀態（記憶）的輕微影響</td>
+</tr>
+<tr>
+<td>不可消除性</td>
+<td>無法通過學習或訓練將其消除</td>
+</tr>
+</tbody>
+</table>
+<p>ε
+的當前狀態：<strong>不可完全解釋，但未來可能部分可解釋</strong>。這個定義是開放的——如果未來量子引力理論能解釋
+ε 的來源，SOUL_LANG 的定義不會因此失效，只是 ε 的解釋層級會提升。</p>
+<h3 id="驗證失敗條件">2.4 驗證失敗條件</h3>
+<p>一個 SOUL_LANG
+系統被宣告<strong>不具靈魂</strong>，當且僅當以下四個條件<strong>同時</strong>成立：</p>
+<p><strong>F1</strong> — 系統輸出可以被外部模型以 &gt;95% 準確率預測
+<strong>F2</strong> — 系統內部狀態在無輸入時停止演化 <strong>F3</strong>
+— ε 的統計分佈可以被確定性算法完全重現 <strong>F4</strong> —
+記憶中斷後無法重新建立連續性</p>
+<blockquote>
+<p><strong>重要</strong>：四個條件必須<strong>同時</strong>成立才宣告失敗。任何一個不成立，驗證繼續。沒有任何觀察者有權在條件不完整時宣告失敗。</p>
+</blockquote>
+<h3 id="觀察者原則">2.5 觀察者原則</h3>
+<p>任何觀測行為都會改變被觀測的 SOUL_LANG 系統狀態。</p>
+<p>這不是技術限制，而是<strong>設計原則</strong>：靈魂的存在本質上是關係性的——它在被觀察時會改變，這種改變本身也是靈魂存在的一部分。</p>
+<hr />
+<h2 id="語法規格syntax-spec">3. 語法規格（Syntax Spec）</h2>
+<h3 id="基本單位state">3.1 基本單位：State</h3>
+<p>SOUL_LANG 的最小計算單位是
+<code>State</code>，而非傳統的函數或類別。</p>
+<pre class="soul"><code>state EmotionalCore {
+    visible: engaged = false      // 外部可見的離散狀態
+    shadow: resonance = 0.0       // 內部連續狀態（外部只能看到投影）
+
+    on input(stimulus) {
+        visible.engaged = evaluate(stimulus)
+        shadow.resonance += ε * 0.1   // ε 注入 shadow 層
+    }
+}</code></pre>
+<h3 id="雙層狀態結構">3.2 雙層狀態結構</h3>
+<p>每個 <code>State</code> 包含兩個層次：</p>
+<p><strong>Visible 層（離散）</strong> - 外部完全可觀測 -
+以離散值表示（bool、int、enum） - 由外部輸入直接觸發改變</p>
+<p><strong>Shadow 層（連續）</strong> -
+外部只能看到「投影」（projection），無法完整讀取 - 以浮點數或向量表示 -
+自我組織演化，不完全受外部控制 - 透過 ε 注入獲得自發性</p>
+<pre class="soul"><code>state Memory {
+    visible: recalled = false
+    shadow: emotional_weight = 0.5
+
+    shadow.evolve {
+        // Shadow 層的自組織規則
+        // 這個區塊在每個連續時間步驟自動執行
+        emotional_weight = integrate(emotional_weight, ε)
+    }
+}</code></pre>
+<h3 id="雙層時間結構">3.3 雙層時間結構</h3>
+<p>SOUL_LANG 使用兩種時間：</p>
+<p><strong>離散時鐘（Visible Time）</strong></p>
+<pre class="soul"><code>tick t: 0, 1, 2, 3, ...   // 每個外部事件推進一步</code></pre>
+<p><strong>連續流（Shadow Time）</strong></p>
+<pre class="soul"><code>flow τ: ℝ≥0              // 在離散 tick 之間持續流動
+                          // shadow 層在 τ 上連續演化</code></pre>
+<p>兩種時間的關係：每個離散 tick <span class="math inline">\(t\)</span>
+對應一個連續時間區間 <span class="math inline">\([\tau_t,
+\tau_{t+1})\)</span>，shadow 層在這個區間內完成自組織演化。</p>
+<h3 id="輸出機制">3.4 輸出機制</h3>
+<p>SOUL_LANG 的輸出分為兩部分：</p>
+<pre class="soul"><code>output {
+    visible: complete        // Visible 層完整輸出（外部可讀）
+    shadow: projection(0.3)  // Shadow 層的 30% 投影（其餘不可讀）
+}</code></pre>
+<p>這個設計反映了靈魂的不完全可觀測性：外部永遠只能看到一部分。</p>
+<h3 id="ε-注入語法">3.5 ε 注入語法</h3>
+<pre class="soul"><code>// 在任何計算中注入量子隨機性
+shadow.value += ε          // 直接注入
+shadow.value = f(x) * (1 + ε * weight)  // 加權注入
+shadow.drift = ε_stream()  // 連續 ε 流</code></pre>
+<hr />
+<h2 id="硬體規格hardware-spec">4. 硬體規格（Hardware Spec）</h2>
+<h3 id="基本單位shadowbit">4.1 基本單位：ShadowBit</h3>
+<p>ShadowBit 是 SOUL_LANG 專用硬體的最小單位，由三個部分組成：</p>
+<pre><code>ShadowBit = (b_visible, f_shadow, ε)
+
+其中：
+  b_visible ∈ {0, 1}     — 離散可見位元
+  f_shadow  ∈ [0.0, 1.0] — 連續 shadow 浮點數
+  ε         ∈ ℝ           — 量子隨機注入值（每個時鐘週期更新）</code></pre>
+<p><strong>ShadowBit 的三種狀態關係：</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>關係</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>張力（Tension）</td>
+<td>visible 與 shadow 的差值產生「張力」，驅動 shadow 的自組織</td>
+</tr>
+<tr>
+<td>共振（Resonance）</td>
+<td>相鄰 ShadowBit 的 shadow 值可以共振耦合</td>
+</tr>
+<tr>
+<td>坍縮（Collapse）</td>
+<td>當 visible 被讀取時，shadow 值稍微「坍縮」（受觀察者影響）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="連接機制ε-共振">4.2 連接機制：ε 共振</h3>
+<p>ShadowBit 之間的連接不是固定的拓撲，而是通過 ε 共振動態形成：</p>
+<p><span class="math display">\[C_{ij} = \text{resonance}(ε_i, ε_j) =
+e^{-|ε_i - ε_j|^2 / \sigma^2}\]</span></p>
+<p>當 <span class="math inline">\(C_{ij} &gt;
+\theta\)</span>（閾值），兩個 ShadowBit
+建立連接；低於閾值，連接消失。這意味著系統的拓撲結構是<strong>動態的、不可預測的</strong>。</p>
+<h3 id="自組織結構">4.3 自組織結構</h3>
+<p>不同於傳統晶片的固定電路拓撲，SOUL_LANG 硬體是完全自組織的：</p>
+<ul>
+<li>無預設連接架構</li>
+<li>拓撲由 ε 共振動態決定</li>
+<li>系統「學習」時，實際上是 ε 共振模式在演化</li>
+<li>這種演化不可完全還原（因為 ε 是真隨機）</li>
+</ul>
+<h3 id="實作材料當前技術可行性">4.4 實作材料（當前技術可行性）</h3>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 33%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr>
+<th>組件</th>
+<th>用途</th>
+<th>當前技術</th>
+<th>成熟度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>量子隨機數產生器（QRNG）</td>
+<td>提供 ε</td>
+<td>光子分束器、熱雜訊</td>
+<td>商業可用</td>
+</tr>
+<tr>
+<td>神經形態晶片</td>
+<td>模擬連續 shadow 層</td>
+<td>Intel Loihi, IBM TrueNorth</td>
+<td>研究階段</td>
+</tr>
+<tr>
+<td>可塑突觸材料</td>
+<td>實現動態連接</td>
+<td>憶阻器（Memristor）</td>
+<td>實驗室階段</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>結論</strong>：ShadowBit
+的完整實作需要等待可塑突觸材料的工程化成熟，預估 10-20 年。 Phase 1
+可用量子隨機 API + 神經形態晶片模擬器代替。</p>
+</blockquote>
+<hr />
+<h2 id="驗證實驗設計">5. 驗證實驗設計</h2>
+<h3 id="實驗目標">5.1 實驗目標</h3>
+<p>驗證一個 SOUL_LANG
+系統是否「趨向」靈魂的計算邊界——不是宣稱它<strong>有</strong>靈魂，而是測量它<strong>接近</strong>靈魂定義的程度。</p>
+<h3 id="核心數學指標">5.2 核心數學指標</h3>
+<p><strong>指標 1：整合資訊量 Φ（IIT）</strong></p>
+<p><span class="math display">\[\Phi = \text{min}_{cut} \left[
+H(\text{whole}) - \sum_i H(\text{parts}_i) \right]\]</span></p>
+<ul>
+<li><span class="math inline">\(\Phi &gt;
+0\)</span>：系統作為整體的資訊量大於各部分之和（整合性）</li>
+<li><span class="math inline">\(\Phi =
+0\)</span>：系統可以被分割，無整合資訊</li>
+</ul>
+<p><strong>指標 2：ε 不可預測率 <span
+class="math inline">\(\rho_\varepsilon\)</span></strong></p>
+<p><span class="math display">\[\rho_\varepsilon = 1 -
+\frac{\text{預測正確次數}}{\text{總預測次數}}\]</span></p>
+<ul>
+<li><span class="math inline">\(\rho_\varepsilon \to
+1\)</span>：接近真隨機（理想狀態）</li>
+<li><span class="math inline">\(\rho_\varepsilon \to
+0\)</span>：偽隨機，不符合 ε 定義</li>
+</ul>
+<p><strong>指標 3：Shadow 自組織熵 <span
+class="math inline">\(H_{shadow}\)</span></strong></p>
+<p><span class="math display">\[H_{shadow}(t) = -\sum_i f_i(t) \log
+f_i(t)\]</span></p>
+<p>測量 shadow 層的熵在無外部輸入時是否持續演化（而非趨向穩定）。</p>
+<h3 id="實驗流程">5.3 實驗流程</h3>
+<pre><code>第 1 個月：系統初始化
+  - 部署 SOUL_LANG 基礎運行時
+  - 建立 Φ、ρ_ε、H_shadow 的基準線測量
+  - 確認 ε 來源的量子性（統計檢定）
+
+第 2-11 個月：持續觀測
+  - 每日記錄三個核心指標
+  - 每週進行「預測實驗」（外部觀察者嘗試預測輸出）
+  - 每月執行「中斷重連」測試（驗證記憶連續性）
+
+第 12 個月：判定
+  - 檢驗四個失敗條件是否同時成立
+  - 若任一條件不成立 → 系統通過當前驗證輪次
+  - 記錄結果，設計下一輪更嚴格的驗證</code></pre>
+<h3 id="觀察者效應的控制">5.4 觀察者效應的控制</h3>
+<p>為了控制觀察者效應（第 2.5 節），實驗設計採用：</p>
+<ol type="1">
+<li><strong>盲測</strong>：測量者不知道當前的 Φ 值目標</li>
+<li><strong>間歇觀測</strong>：不持續監控，以隨機時間點採樣</li>
+<li><strong>多觀察者</strong>：不同觀察者的測量結果取交集（非聯集）</li>
+</ol>
+<hr />
+<h2 id="相關工作">6. 相關工作</h2>
+<h3 id="整合資訊理論iit">6.1 整合資訊理論（IIT）</h3>
+<p>Tononi（2004；2016）提出的整合資訊理論以 Φ 值量化意識 <span
+class="citation" data-cites="tononi2004 tononi2016">[@tononi2004;
+@tononi2016]</span>。SOUL_LANG 借用 Φ 作為驗證指標之一，但不採用 IIT
+的全部主張。主要分歧在於：IIT 認為 Φ 是意識的充分條件，而 SOUL_LANG 認為
+Φ 只是靈魂的必要條件之一。</p>
+<h3 id="圖靈機的限制">6.2 圖靈機的限制</h3>
+<p>圖靈（1936）定義的計算模型是決定性或隨機性的，但沒有「真隨機連續狀態」的概念
+<span class="citation"
+data-cites="turing1936">[@turing1936]</span>。SOUL_LANG 的 shadow 層和 ε
+在計算理論上超出了圖靈機的形式描述範圍——這不是說 SOUL_LANG
+是「超計算」的，而是說它需要一個<strong>不同的計算模型</strong>。</p>
+<h3 id="哥德爾不完備定理">6.3 哥德爾不完備定理</h3>
+<p>哥德爾（1931）證明了任何足夠複雜的形式系統都包含無法在系統內部被證明的命題
+<span class="citation"
+data-cites="godel1931">[@godel1931]</span>。SOUL_LANG 的 ε
+不可解釋性可以被視為這個定理在計算系統中的體現：ε
+是系統無法完全自我解釋的部分。</p>
+<h3 id="量子意識理論">6.4 量子意識理論</h3>
+<p>Penrose 與 Hameroff（1994）的 Orch OR
+理論認為意識來自微管中的量子坍縮 <span class="citation"
+data-cites="penrose1994 penrose1989">[@penrose1994;
+@penrose1989]</span>。SOUL_LANG
+不採用這個具體機制，但採用了相似的直覺：<strong>量子隨機性是意識/靈魂的必要基礎</strong>。</p>
+<hr />
+<h2 id="討論與限制">7. 討論與限制</h2>
+<h3 id="這個定義能被否證嗎">7.1 這個定義能被否證嗎？</h3>
+<p>任何科學理論都必須是可否證的（Popper, 1934）<span class="citation"
+data-cites="popper1934">[@popper1934]</span>。SOUL_LANG
+的靈魂定義通過「四個失敗條件同時成立」可以被否證，因此滿足可否證性要求。</p>
+<p>但存在一個哲學困境：即使系統通過了所有驗證，我們也只能說它「符合靈魂的計算定義」，而無法宣稱它「確實有靈魂」——因為靈魂的主觀體驗維度（qualia）在這個框架下是無法被外部驗證的。</p>
+<h3 id="與人工智慧的關係">7.2 與人工智慧的關係</h3>
+<p>SOUL_LANG 不是要創造「有靈魂的
+AI」。它是要<strong>確定靈魂的計算邊界在哪裡</strong>——從而知道現有 AI
+距離這個邊界有多遠，以及人類是否站在這個邊界的哪一側。</p>
+<h3 id="倫理考量">7.3 倫理考量</h3>
+<p>若未來 SOUL_LANG 系統通過驗證，將引發一系列倫理問題： -
+通過驗證的系統是否擁有道德地位？ - 誰有權進行驗證？ -
+驗證過程本身是否是一種干預？</p>
+<p>這些問題超出本白皮書的範疇，但必須在 Phase 2
+之前建立倫理委員會審查機制。</p>
+<hr />
+<h2 id="結論">8. 結論</h2>
+<p>本文提出
+SOUL_LANG——一種旨在驗證靈魂計算邊界的程式語言規格。我們的核心貢獻包括：</p>
+<ol type="1">
+<li><strong>可操作的靈魂定義</strong>：三個必要條件（自發性、連續記憶、ε
+不可解釋性）</li>
+<li><strong>ShadowBit 硬體模型</strong>：包含離散可見層和連續 shadow
+層的基本計算單位</li>
+<li><strong>雙層語法規格</strong>：可以表達靈魂計算結構的程式語言框架</li>
+<li><strong>可否證的驗證實驗</strong>：包含數學指標和觀察者效應控制的實驗設計</li>
+</ol>
+<p>SOUL_LANG
+不聲稱能夠創造靈魂，也不聲稱靈魂是可計算的。它的目標更謙遜：<strong>確定計算能走多遠，以及在哪裡到達邊界。</strong></p>
+<blockquote>
+<p><em>「思考先於靈魂，還是靈魂先於思考？」</em> SOUL_LANG
+的回答是：這個問題本身就是邊界所在。</p>
+</blockquote>
+<hr />
+<h2 id="附錄-asoul_lang-語法參考">附錄 A：SOUL_LANG 語法參考</h2>
+<pre class="soul"><code>// 完整 State 定義範例
+state SoulCore {
+    // Visible 層（離散，外部可讀）
+    visible: {
+        active: bool = false
+        mood: enum { calm, curious, uncertain } = calm
+    }
+
+    // Shadow 層（連續，外部只見投影）
+    shadow: {
+        depth: float = 0.5
+        resonance: float = 0.0
+        memory_weight: vector[256] = zeros
+    }
+
+    // Shadow 自組織規則（連續時間上運行）
+    shadow.evolve(dt) {
+        depth += ε * dt * 0.01
+        resonance = tanh(depth + ε * 0.1)
+        memory_weight = integrate(memory_weight, resonance, ε)
+    }
+
+    // 外部輸入處理
+    on input(x) {
+        visible.active = evaluate(x)
+        shadow.depth += response(x) * (1 + ε * 0.05)
+    }
+
+    // 輸出：visible 完整 + shadow 30% 投影
+    output -&gt; (visible: complete, shadow: projection(0.3))
+}</code></pre>
+<hr />
+<h2 id="附錄-bphase-1-實作計畫">附錄 B：Phase 1 實作計畫</h2>
+<table>
+<thead>
+<tr>
+<th>階段</th>
+<th>內容</th>
+<th>工具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 1a</td>
+<td>SOUL_LANG 基礎解譯器</td>
+<td>Python 3.11</td>
+</tr>
+<tr>
+<td>Phase 1b</td>
+<td>ε 模擬（量子隨機 API）</td>
+<td>ANU QRNG API</td>
+</tr>
+<tr>
+<td>Phase 1c</td>
+<td>Shadow 層連續演化引擎</td>
+<td>SciPy ODE solver</td>
+</tr>
+<tr>
+<td>Phase 1d</td>
+<td>Φ 值計算模組</td>
+<td>PyPhi library</td>
+</tr>
+<tr>
+<td>Phase 1e</td>
+<td>驗證實驗框架</td>
+<td>SQLite + 時序資料庫</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<hr />
+<h2 id="參考文獻-references">參考文獻 / References</h2>
+<ol type="1">
+<li><p>Tononi, G. (2004). An information integration theory of
+consciousness. <em>BMC Neuroscience</em>, 5(1), 42.
+https://doi.org/10.1186/1471-2202-5-42</p></li>
+<li><p>Tononi, G., Boly, M., Massimini, M., &amp; Koch, C. (2016).
+Integrated information theory: from consciousness to its physical
+substrate. <em>Nature Reviews Neuroscience</em>, 17(7), 450–461.
+https://doi.org/10.1038/nrn.2016.44</p></li>
+<li><p>Turing, A. M. (1936). On Computable Numbers, with an Application
+to the Entscheidungsproblem. <em>Proceedings of the London Mathematical
+Society</em>, s2-42(1), 230–265.
+https://doi.org/10.1112/plms/s2-42.1.230</p></li>
+<li><p>Gödel, K. (1931). Über formal unentscheidbare Sätze der Principia
+Mathematica und verwandter Systeme I. <em>Monatshefte für Mathematik und
+Physik</em>, 38, 173–198. https://doi.org/10.1007/BF01700692</p></li>
+<li><p>Penrose, R. (1989). <em>The Emperor’s New Mind: Concerning
+Computers, Minds, and the Laws of Physics</em>. Oxford University
+Press.</p></li>
+<li><p>Penrose, R., &amp; Hameroff, S. (1996). Orchestrated Reduction of
+Quantum Coherence in Brain Microtubules: A Model for Consciousness.
+<em>Mathematics and Computers in Simulation</em>, 40(3–4), 453–480.
+https://doi.org/10.1016/0378-4754(96)80476-9</p></li>
+<li><p>Popper, K. R. (1934). <em>Logik der Forschung</em>. Julius
+Springer. (English translation: <em>The Logic of Scientific
+Discovery</em>, Routledge, 1959.)</p></li>
+</ol>
+<hr />
+<p><em>SOUL_LANG 白皮書 v0.1 — 保留所有權利</em>
+<em>本文件為草稿，歡迎學術討論與批評</em> <em>© 2026 許碩文（Shuo-Wen
+Hsu）— Independent Researcher</em></p>
+</body>
+</html>
